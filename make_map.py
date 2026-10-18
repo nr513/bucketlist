@@ -14,8 +14,13 @@ from html import escape
 import re
 import datetime
 import calendar
+import os
+import shutil
+import subprocess
+import sys
 
-SCHEDULED_CATS = {"event/festival", "race"}   # categories that have scheduling restrictions
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def make_palette(n):
     """Return n visually distinct hex colors."""
@@ -617,6 +622,29 @@ def process_file(path):
     m.save(OUTPUT_HTML)
     print(f"Saved {OUTPUT_HTML} with {len(mapped)} places of interest")
 
+def run_git(*args):
+    result = subprocess.run(
+        ["git", "-C", REPO_DIR, *args],
+        capture_output=True, text=True,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} failed:\n{result.stderr.strip()}")
+    return result.stdout
+
+def push_to_git():
+    
+    dest = os.path.join(REPO_DIR, "index.html")
+
+    run_git("add", dest)
+
+    # Skip the commit if nothing changed (commit would error otherwise)
+    if run_git("status", "--porcelain", dest).strip():
+        run_git("commit", "-m", f"Update index.html")
+        run_git("push")
+        print("Pushed to git.")
+    else:
+        print("No changes to push.")
 
 
 if __name__ == "__main__":
@@ -625,6 +653,7 @@ if __name__ == "__main__":
         input_path = os.path.abspath(sys.argv[1]) # TODO: uncomment
         #input_path = os.path.abspath(r"file.xlsx") # TODO: delete
         process_file(input_path)
+        push_to_git()
 
     except Exception as e:
         print(f"Error: {e}")
