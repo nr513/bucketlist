@@ -20,6 +20,7 @@ import subprocess
 import sys
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+print(f"Running out of: {REPO_DIR}")
 
 
 def make_palette(n):
@@ -633,18 +634,11 @@ def run_git(*args):
     return result.stdout
 
 def push_to_git():
-    
-    dest = os.path.join(REPO_DIR, "index.html")
 
-    run_git("add", dest)
-
-    # Skip the commit if nothing changed (commit would error otherwise)
-    if run_git("status", "--porcelain", dest).strip():
-        run_git("commit", "-m", f"Update index.html")
-        run_git("push")
-        print("Pushed to git.")
-    else:
-        print("No changes to push.")
+    run_git("add", "index.html")
+    run_git("commit", "-m", f"Updated index.html")
+    run_git("push")
+    print("Pushed to git.")
 
 
 if __name__ == "__main__":
